@@ -1,0 +1,40 @@
+{
+  "name": "RowingSmsManager",
+  "description": "A SMS based organizer for club rowing.",
+  "version": "0.0.1",
+  "private": true,
+  "author": "Henry Zimmerman",
+  "scripts": {
+    "dev": "NODE_ENV=development nodemon ./bin/www",
+    "grunt": "grunt",
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "@types/dotenv": "^4.0.0",
+    "@types/twilio": "0.0.9",
+    "body-parser": "^1.15.2",
+    "cookie-parser": "^1.4.3",
+    "dotenv": "^4.0.0",
+    "errorhandler": "^1.4.3",
+    "express": "^4.14.0",
+    "inversify": "^4.2.0",
+    "method-override": "^2.3.6",
+    "morgan": "^1.7.0",
+    "pug": "^2.0.0-beta6",
+    "reflect-metadata": "^0.1.10",
+    "twilio": "^3.5.0"
+  },
+  "devDependencies": {
+    "@types/body-parser": "0.0.33",
+    "@types/cookie-parser": "^1.3.30",
+    "@types/errorhandler": "0.0.30",
+    "@types/method-override": "0.0.29",
+    "@types/morgan": "^1.7.32",
+    "grunt": "^1.0.1",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-watch": "^1.0.0",
+    "grunt-ts": "^6.0.0-beta.3",
+    "nodemon": "^1.11.0",
+    "typescript": "^2.0.8"
+  }
+}
