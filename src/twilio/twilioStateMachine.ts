@@ -34,40 +34,70 @@ export abstract class State {
   constructor (){}; 
   // This may also need a reference to the system state, or it may need to be injected
   
+
+  private static COMMAND_ORGANIZE_BOAT: string = "organize boat"
   protected static handleRequestForHelp(input: string): Optional<string> {
     if(input == "H" || input == "h" || input == "commands") {
       return new Optional<string>("Organize boat - Requests that a new boat be organized.")
     } else {
       return new Optional<string>(new None());
     }
-  }
+  
+}
   protected static handleHelpSpecificCommands(input: string) {
-    if (input == "Organize boat")
+    if (input.toLowerCase() == State.COMMAND_ORGANIZE_BOAT) {
+      
+    }
+
   }
+
+  protected normalizeInput(input: string) {
+    return input.toLowerCase();
+  }
+
 }
 
 
 
 
 export class AwaitingConfirmation extends State {
+
+  //The commands enumerated here _MUST_ have a help message.
+  // Other inputs are allowed to have the same state change
+  private static COMMAND_YES: string = "yes";
+  private static COMMAND_NO: string = "no";
+
   public transitionTo(input: string): TransitionResult {
-    let transitionResult: TransitionResult | undefined = State.handleRequestForHelp(input).some_or( (helpMessage: string) => {
-      return {responseMessage: helpMessage, state: new AwaitingConfirmation()};
+    const normalizedInput = this.normalizeInput(input);
+    let transitionResult: TransitionResult | undefined;
+
+    State.handleRequestForHelp(normalizedInput).some_or( (helpMessage: string) => {
+      //TODO, possibly add a state-relevant help message here.
+      transitionResult = {responseMessage: helpMessage, state: new AwaitingConfirmation()}; // respond with the help response and stay in the same state.
     });
-    if (transitionResult != undefined) {
-      return transitionResult;
-    }
-    
 
-    if (input == "yes") {
-      // TODO add to ledger of confirmed users
-      return {responseMessage: "You are confirmed for $event at $time", state: new StartAndEndState()};
-    } else if ( input == "no") {
-      return {responseMessage: "You have declined the request", state: new StartAndEndState()};
-    } else {
-      return {responseMessage: "Response must be either \"yes\" or \"no\".", state: new AwaitingConfirmation()};
+
+    switch (normalizedInput) { 
+      case "yup":
+      case "yeah":
+      case AwaitingConfirmation.COMMAND_YES:
+        // eventStore.addParticipantToEvent(user, event)
+        transitionResult = {responseMessage: "You are confirmed for $event at $time", state: new StartAndEndState()};
+        break;
+      case "nah":
+      case "nope":
+      case "no thank you":
+      case "no thanks":
+      case "no thankyou":
+      case AwaitingConfirmation.COMMAND_NO:       
+        transitionResult = {responseMessage: "You have declined the request", state: new StartAndEndState()};
+        break;
+      default:
+        transitionResult = {responseMessage: "Response must be either \"yes\" or \"no\".", state: new AwaitingConfirmation()};
+        break;
     }
 
+    return transitionResult; 
   }
 
 
