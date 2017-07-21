@@ -18,7 +18,11 @@ export class StateMachine {
 
   public processInput(message: string): Promise<string> {
    let transitionPromise: Promise<TransitionResult> = this.state.transitionTo(message);
+   transitionPromise.then((tr: TransitionResult) => {
+     this.state = tr.state;
+   })
    return transitionPromise.then((tr: TransitionResult) => {
+      console.log(`setting state to: ${typeof tr.state}`)
       this.state = tr.state;
       return tr.responseMessage;
    });
@@ -106,27 +110,39 @@ export class AwaitingConfirmation extends State {
     const normalizedInput = State.normalizeInput(input);
     let transitionResult: TransitionResult = this.indicateInvalidInputAndMaintainState(); // assume the input will be invalid, overwrite the result if input is valid.
 
-    return State.checkForConfirmationOrDeclination(normalizedInput).then((didAccept: boolean) => {
-      console.log("did resolve")
-      if (didAccept) {
-        return {responseMessage: "You are confirmed for $event at $time", state: new StartAndEndState()};
-      } else {
-        return {responseMessage: "You have declined the request", state: new StartAndEndState()};
-      }
-    }).catch(() => {
-      return State.checkIfHelp(normalizedInput).then( (helpMessage: string)=>{
-        return {responseMessage: helpMessage, state: new AwaitingConfirmation()}; // respond with the help response and stay in the same state.
+    return State.checkForConfirmationOrDeclination(normalizedInput)
+      .then((didAccept: boolean) => {
+        if (didAccept) {
+          return {responseMessage: "You are confirmed for $event at $time", state: new StartAndEndState()};
+        } else {
+          return {responseMessage: "You have declined the request", state: new StartAndEndState()};
+        }
+      })
+      .catch(() => {
+        return State.checkIfHelp(normalizedInput)
+        .then( (helpMessage: string) => {
+          return {responseMessage: helpMessage, state: new AwaitingConfirmation()}; // respond with the help response and stay in the same state.
+        })
+        .catch(() => {
+          return Promise.resolve(this.indicateInvalidInputAndMaintainState());
+        });
       });
-    });
   }
 }
 
 // Should probably make this the end AND start state, as a conversation is never really "over"
 export class StartAndEndState extends State {
+  constructor() {
+    super();
+    console.log("created new StartAndEndState");
+  }
   public transitionTo(input: string): Promise<TransitionResult> {
-    State.checkIfHelp(input).then( (helpMessage: string) => {
-      return {responseMessage: helpMessage, state: new StartAndEndState()};
-    });
-    return Promise.resolve({responseMessage: "End_state", state: new StartAndEndState()});
+    return State.checkIfHelp(input)
+      .then( (helpMessage: string) => {
+        return {responseMessage: helpMessage, state: new StartAndEndState()};
+      })
+      .catch( () => {
+        return Promise.resolve({responseMessage: "End_state", state: new StartAndEndState()});
+      });
   }
 }

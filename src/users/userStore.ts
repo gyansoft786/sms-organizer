@@ -10,7 +10,7 @@ export interface UserStore {
 }
 
 
-// @injectable()
+@injectable()
 export class MockUserStore implements UserStore {
   
   private _userArray: Array<User>;

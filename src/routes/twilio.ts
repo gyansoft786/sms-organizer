@@ -18,7 +18,7 @@ export class TwilioRoute extends BaseRoute {
 
     router.post("/sms", (req: Request, res: Response, next: NextFunction) => {
         new TwilioRoute().handleMessage(req,res,next);
-    })
+    });
   }
 
   constructor() {
@@ -27,9 +27,9 @@ export class TwilioRoute extends BaseRoute {
 
 private handleMessage(req: Request, res: Response, next: NextFunction) {
   // Look up the user via their number.
-  // const userStore: UserStore = container.get<UserStore>(IDENTIFIER_TOKEN.USER_STORE);
+  const userStore: UserStore = container.get<UserStore>(IDENTIFIER_TOKEN.USER_STORE);
   // const userStoreFactory: UserStoreFactory = container.get<UserStoreFactory>(IDENTIFIER_TOKEN.USER_STORE_FACTORY);
-  let userStore = UserStoreFactory.defaultUserStore();
+//   let userStore = UserStoreFactory.defaultUserStore();
 
   // User should have a state machine associated with them.
   let requestingNumber = req.body.From;
@@ -39,9 +39,7 @@ private handleMessage(req: Request, res: Response, next: NextFunction) {
   });
   console.log(`Message recieved from ${requestingNumber}, this maps to user: ${sessionUser.fullName}`);
     
-  sessionUser.setState(new AwaitingConfirmation())
   const response: Promise<string> = sessionUser.processInput(requestingMessage);
-
   response.then((message: string) => {
     console.log(`Response: ${message}`);
 

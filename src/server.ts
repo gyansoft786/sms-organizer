@@ -9,6 +9,11 @@ import methodOverride = require("method-override");
 
 import { IndexRoute } from "./routes/index";
 import { TwilioRoute } from "./routes/twilio";
+import { UserStore } from "./users/userStore";
+import { container } from './dependencyInjection/inversifyConfig';
+import { IDENTIFIER_TOKEN } from './dependencyInjection/identifierToken';
+import { User } from './users/user';
+import { AwaitingConfirmation } from './twilio/twilioStateMachine';
 
 /**
  * The server.
@@ -99,6 +104,11 @@ export class Server {
     });
 
     //setup inversify
+    const userStore: UserStore = container.get<UserStore>(IDENTIFIER_TOKEN.USER_STORE);
+    const henryUser = new User("Henry", "Zimmerman", "+18472871920");
+    henryUser.setState(new AwaitingConfirmation()); // remove me
+    userStore.addUser(henryUser);
+
 
     //error handling
     this.app.use(errorHandler());
