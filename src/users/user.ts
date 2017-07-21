@@ -1,4 +1,6 @@
 import { StateMachine, State } from "../twilio/twilioStateMachine"
+import { Group } from "../group/group";
+import { ArrayUtil } from "../util/arrayUtil";
 
 
 export class User {
@@ -6,7 +8,7 @@ export class User {
   private readonly _phoneNumber: string;
   private readonly _firstName: string;
   private readonly _lastName: string;
-  //private groups: Array<Group>;
+  private groups: Array<Group>;
   private stateMachine: StateMachine;
 
   constructor( firstName: string, lastName: string, phoneNumber: string ) {
@@ -42,7 +44,14 @@ export class User {
     return this._phoneNumber;
   }
 
-  
+  // adds groups to the user so a query will see if they are interested
+  public registerGroups(groups: Array<Group>){
+    this.groups = ArrayUtil.union(this.groups, groups);
+  }
+
+  public deregisterGroups(groups: Array<Group>){
+    this.groups = ArrayUtil.removeElementsFromFirstArray(this.groups, groups);
+  }
 
 
 

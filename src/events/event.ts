@@ -1,12 +1,13 @@
 import { User } from "../users/user";
-import { StringUtil } from "../util/stringUtil"
+import { StringUtil } from "../util/stringUtil";
+import { Group } from "../group/group";
 
 export class Event {
   private time: Date;
   private location: any | null; // implement physical location
-  private resource: any | null; // boats
+  private resource: any | null; // implement boats
   private participants: Array<User>;
-  private eligableGroups: Array<any>; // implement group;
+  private eligableGroups: Array<Group>; // implement group;
 
   
   constructor(time: Date, location: any) {

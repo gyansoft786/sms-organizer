@@ -5,10 +5,12 @@ export class Loger {
     private readonly minimumSeverity: LogSeverity = LogSeverity.Info;
     private readonly allowedPurposes: Array<LogPurpose> = [LogPurpose.Instansiation, LogPurpose.Networking, LogPurpose.Serialization, LogPurpose.Presentation];
 
-    public log(severity: LogSeverity, purpose: LogPurpose, object: string, message: string) {
+    public log(severity: LogSeverity, purpose: LogPurpose, obj:any, message: string) {
+        const objectName = Object.getPrototypeOf(obj).constructor.name; // reflection nonsense
+
         if (severity > this.minimumSeverity) {
             if (this.allowedPurposes.indexOf(purpose) > 0) {
-                console.log(`${LogSeverity[severity]}: ${object}: ${message}`); // todo, use something other than stdout for logs :/
+                console.log(`${LogSeverity[severity]}: ${objectName}: ${message}`); // todo, use something other than stdout for logs :/
             }
         }
     }
