@@ -1,10 +1,18 @@
 import * as twilio from "twilio";
 import { Optional, None, Some } from "../util/optional";
 import { InputChecker } from './inputChecker';
+import { User } from '../users/user';
+
+
+export interface TransitionResult {
+  state: State,
+  responseMessage: string
+}
+
 
 
 export class StateMachine {
-  private state: State = new StartAndEndState();
+  private state: State;
 
 
   constructor(state?: State) {
@@ -30,14 +38,10 @@ export class StateMachine {
   }
 }
 
-export interface TransitionResult {
-  state: State,
-  responseMessage: string
-}
 
 export abstract class State {
   abstract transitionTo(input: string): Promise<TransitionResult>;
-  constructor (){}; 
+  constructor (readonly user: User){}; 
   // This may also need a reference to the system state, or it may need to be injected
   
   // protected static readonly EMPTY_TRANSITON_RESULT: TransitionResult = {responseMessage: "", state: {}};
@@ -71,14 +75,14 @@ export class AwaitingConfirmation extends State {
     return InputChecker.checkForConfirmationOrDeclination(normalizedInput)
       .then((didAccept: boolean) => {
         if (didAccept) {
-          return {responseMessage: "You are confirmed for $event at $time", state: new StartAndEndState()};
+          return {responseMessage: "You are confirmed for $event at $time", state: new StartAndEndState(this.user)};
         } else {
-          return {responseMessage: "You have declined the request", state: new StartAndEndState()};
+          return {responseMessage: "You have declined the request", state: new StartAndEndState(this.user)};
         }
       })
       .catch(() => {
         return InputChecker.checkIfHelp(normalizedInput).then( (helpMessage: string) => {
-          return {responseMessage: helpMessage, state: new AwaitingConfirmation()}; // respond with the help response and stay in the same state.
+          return {responseMessage: helpMessage, state: new AwaitingConfirmation(this.user)}; // respond with the help response and stay in the same state.
         })
         .catch(() => {
           return Promise.resolve(this.indicateInvalidInputAndMaintainState());
@@ -88,10 +92,6 @@ export class AwaitingConfirmation extends State {
 }
 
 export class StartAndEndState extends State {
-  constructor() {
-    super();
-    console.log("created new StartAndEndState");
-  }
   public transitionTo(input: string): Promise<TransitionResult> {
     return InputChecker.checkIfHelp(input)
       .then( (helpMessage: string) => {
@@ -100,11 +100,11 @@ export class StartAndEndState extends State {
         return InputChecker.checkForCancel(input).then( () => {
           // get events, enumerate through them.
           // Events must be returned in order, or with some identifier, so they can be used by differnt promise chains.
-          return {responseMessage: "You have $n scheduled events. 1: $time, 2: $time, 3: $time. Which one do you want to cancel?", state: new CancelConfirmationState()}
+          return {responseMessage: "You have $n scheduled events. 1: $time, 2: $time, 3: $time. Which one do you want to cancel?", state: new CancelConfirmationState(this.user)}
         })
       })
       .catch( () => {
-        return Promise.resolve({responseMessage: "You are at the end or start state, you currently can't do anything from here.", state: new StartAndEndState()});
+        return Promise.resolve({responseMessage: "You are at the end or start state, you currently can't do anything from here.", state: new StartAndEndState(this.user)});
       });
   }
 
@@ -119,7 +119,7 @@ export class CancelConfirmationState extends State {
       return InputChecker.checkForNumber(input).then( (chosenNumber) => {
         // get boats for user, (assuming there are 4 here)
         if ( chosenNumber < 5 ) {
-          return {responseMessage: `You chose ${chosenNumber}, canceling your participation at boat at $time`, state: new StartAndEndState()};
+          return {responseMessage: `You chose ${chosenNumber}, canceling your participation at boat at $time`, state: new StartAndEndState(this.user)};
         } else {
           return {responseMessage: `You chose ${chosenNumber}, there is no boat associated with that number, try again.`, state: this};
         }

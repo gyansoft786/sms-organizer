@@ -109,7 +109,7 @@ export class Server {
     const henryUser = new User("Henry", "Zimmerman", "+18472871920");
     const twilioClient: TwilioClient = new TwilioClient();
     twilioClient.sendSMSToUser(henryUser,"Are you interested in a boat at 3:30 am July 5th?");
-    henryUser.setState(new AwaitingConfirmation()); // remove me
+    henryUser.setState(new AwaitingConfirmation(henryUser)); // remove me
     userStore.addUser(henryUser);
 
 
