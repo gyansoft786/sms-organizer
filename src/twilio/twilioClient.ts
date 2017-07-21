@@ -4,7 +4,8 @@ import * as twilio from "twilio";
 
 import { BaseRoute } from "../routes/route";
 import { NextFunction, Request, Response, Router } from "express";
-import { Guards } from "../util/guards"
+import { Guards } from "../util/guards";
+import { User } from "../users/user";
 
 
 export class TwilioClient {
@@ -28,11 +29,15 @@ export class TwilioClient {
             to: to,
             from: this.sendingNumber,
         }).then(function(data: any) {
-            console.log('Message sent');
+            console.log(`Message sent: ${message}`);
         }).catch(function(err: any) {
             console.error('Could not send message');
             console.error(err);
         });
+    }
+
+    public sendSMSToUser(user: User, message: string): void {
+        this.sendSMS(user.phoneNumber, message);
     }
 }
 

@@ -14,6 +14,7 @@ import { container } from './dependencyInjection/inversifyConfig';
 import { IDENTIFIER_TOKEN } from './dependencyInjection/identifierToken';
 import { User } from './users/user';
 import { AwaitingConfirmation } from './twilio/twilioStateMachine';
+import { TwilioClient } from './twilio/twilioClient';
 
 /**
  * The server.
@@ -103,9 +104,11 @@ export class Server {
         next(err);
     });
 
-    //setup inversify
+    //do misc testing stuff, remove later plz
     const userStore: UserStore = container.get<UserStore>(IDENTIFIER_TOKEN.USER_STORE);
     const henryUser = new User("Henry", "Zimmerman", "+18472871920");
+    const twilioClient: TwilioClient = new TwilioClient();
+    twilioClient.sendSMSToUser(henryUser,"Are you interested in a boat at 3:30 am July 5th?");
     henryUser.setState(new AwaitingConfirmation()); // remove me
     userStore.addUser(henryUser);
 
@@ -126,7 +129,7 @@ export class Server {
     router = express.Router();
 
     //IndexRoute
-    IndexRoute.create(router);
+    // IndexRoute.create(router);
     TwilioRoute.create(router);
     
 

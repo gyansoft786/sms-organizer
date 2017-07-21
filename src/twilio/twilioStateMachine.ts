@@ -1,5 +1,6 @@
 import * as twilio from "twilio";
 import { Optional, None, Some } from "../util/optional";
+import { InputChecker } from './inputChecker';
 
 
 export class StateMachine {
@@ -44,45 +45,6 @@ export abstract class State {
 
   private static COMMAND_ORGANIZE_BOAT: string = "organize boat";
 
-  protected static checkIfHelp(input: string): Promise<string> {
-    return new Promise((resolve, reject)=> {
-      const normalizedInput = State.normalizeInput(input);
-      switch (normalizedInput) {
-        case "":
-        case "commands":
-        case "options":
-          resolve("Organize boat - Requests that a new boat be organized.") 
-        default:
-          reject();
-      }
-    }); 
-  }
-
-  protected static checkForConfirmationOrDeclination(input: string): Promise<boolean> {
-    return new Promise((resolve, reject)=> {
-      const normalizedInput = State.normalizeInput(input);
-      console.log(`input: ${normalizedInput}`);
-      switch (normalizedInput) {
-        case "yup":
-        case "yeah":
-        case "yes":
-          console.log("resolving");
-          resolve(true);
-          break;
-        case "nah":
-        case "nope":
-        case "no thank you":
-        case "no thanks":
-        case "no thankyou":
-        case "no": 
-          resolve(false);
-          break
-        default:
-          reject()
-      }
-    }); 
-  }
-
 
   protected static handleHelpSpecificCommands(input: string) {
     if (input.toLowerCase() == State.COMMAND_ORGANIZE_BOAT) {
@@ -90,13 +52,9 @@ export abstract class State {
 
   }
 
-  protected static normalizeInput(input: string) {
-    return input.toLowerCase();
-  }
-
   //TODO consider adding a help message to this.
   protected indicateInvalidInputAndMaintainState(): TransitionResult {
-    return {responseMessage: "unrecogonized input", state: this}
+    return {responseMessage: "Unrecogonized input. Here's some help...", state: this}
   }
 
 }
@@ -107,10 +65,10 @@ export abstract class State {
 export class AwaitingConfirmation extends State {
 
   public transitionTo(input: string): Promise<TransitionResult> {
-    const normalizedInput = State.normalizeInput(input);
+    const normalizedInput = InputChecker.normalizeInput(input);
     let transitionResult: TransitionResult = this.indicateInvalidInputAndMaintainState(); // assume the input will be invalid, overwrite the result if input is valid.
 
-    return State.checkForConfirmationOrDeclination(normalizedInput)
+    return InputChecker.checkForConfirmationOrDeclination(normalizedInput)
       .then((didAccept: boolean) => {
         if (didAccept) {
           return {responseMessage: "You are confirmed for $event at $time", state: new StartAndEndState()};
@@ -119,30 +77,57 @@ export class AwaitingConfirmation extends State {
         }
       })
       .catch(() => {
-        return State.checkIfHelp(normalizedInput)
-        .then( (helpMessage: string) => {
+        return InputChecker.checkIfHelp(normalizedInput).then( (helpMessage: string) => {
           return {responseMessage: helpMessage, state: new AwaitingConfirmation()}; // respond with the help response and stay in the same state.
         })
         .catch(() => {
           return Promise.resolve(this.indicateInvalidInputAndMaintainState());
         });
-      });
+    });
   }
 }
 
-// Should probably make this the end AND start state, as a conversation is never really "over"
 export class StartAndEndState extends State {
   constructor() {
     super();
     console.log("created new StartAndEndState");
   }
   public transitionTo(input: string): Promise<TransitionResult> {
-    return State.checkIfHelp(input)
+    return InputChecker.checkIfHelp(input)
       .then( (helpMessage: string) => {
-        return {responseMessage: helpMessage, state: new StartAndEndState()};
+        return {responseMessage: helpMessage, state: this};
+      }).catch( () => {
+        return InputChecker.checkForCancel(input).then( () => {
+          // get events, enumerate through them.
+          // Events must be returned in order, or with some identifier, so they can be used by differnt promise chains.
+          return {responseMessage: "You have $n scheduled events. 1: $time, 2: $time, 3: $time. Which one do you want to cancel?", state: new CancelConfirmationState()}
+        })
       })
       .catch( () => {
-        return Promise.resolve({responseMessage: "End_state", state: new StartAndEndState()});
+        return Promise.resolve({responseMessage: "You are at the end or start state, you currently can't do anything from here.", state: new StartAndEndState()});
       });
   }
+
+}
+
+
+export class CancelConfirmationState extends State {
+  public transitionTo(input: string): Promise<TransitionResult> {
+    return InputChecker.checkIfHelp(input).then( (helpMessage: string) => {
+      return {responseMessage: helpMessage, state: this};
+    }).catch( () => {
+      return InputChecker.checkForNumber(input).then( (chosenNumber) => {
+        // get boats for user, (assuming there are 4 here)
+        if ( chosenNumber < 5 ) {
+          return {responseMessage: `You chose ${chosenNumber}, canceling your participation at boat at $time`, state: new StartAndEndState()};
+        } else {
+          return {responseMessage: `You chose ${chosenNumber}, there is no boat associated with that number, try again.`, state: this};
+        }
+
+      })
+    }).catch( () => {
+       return Promise.resolve(this.indicateInvalidInputAndMaintainState());
+    });
+  }
+
 }
