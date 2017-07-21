@@ -21,7 +21,7 @@ export class User {
     this.stateMachine.externallySetSatate(state);
   }
 
-  public processInput(message: string ): string {
+  public processInput(message: string ): Promise<string> {
    return this.stateMachine.processInput(message);
   }
 

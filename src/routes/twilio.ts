@@ -13,39 +13,44 @@ import { AwaitingConfirmation } from "../twilio/twilioStateMachine";
 
 export class TwilioRoute extends BaseRoute {
 
-    public static create(router: Router) {
-        console.log("[TwilioRoute::create] Creating twilio route.");
+  public static create(router: Router) {
+    console.log("[TwilioRoute::create] Creating twilio route.");
 
-        router.post("/sms", (req: Request, res: Response, next: NextFunction) => {
-            new TwilioRoute().handleMessage(req,res,next);
-        })
-    }
+    router.post("/sms", (req: Request, res: Response, next: NextFunction) => {
+        new TwilioRoute().handleMessage(req,res,next);
+    })
+  }
 
-    constructor() {
-        super();
-    }
+  constructor() {
+      super();
+  }
 
-    private handleMessage(req: Request, res: Response, next: NextFunction) {
-        // Look up the user via their number.
-        // const userStore: UserStore = container.get<UserStore>(IDENTIFIER_TOKEN.USER_STORE);
-        // const userStoreFactory: UserStoreFactory = container.get<UserStoreFactory>(IDENTIFIER_TOKEN.USER_STORE_FACTORY);
-        let userStore = UserStoreFactory.defaultUserStore();
+private handleMessage(req: Request, res: Response, next: NextFunction) {
+  // Look up the user via their number.
+  // const userStore: UserStore = container.get<UserStore>(IDENTIFIER_TOKEN.USER_STORE);
+  // const userStoreFactory: UserStoreFactory = container.get<UserStoreFactory>(IDENTIFIER_TOKEN.USER_STORE_FACTORY);
+  let userStore = UserStoreFactory.defaultUserStore();
 
-        // User should have a state machine associated with them.
-        let requestingNumber = req.body.From;
-        let requestingMessage = req.body.Body
-        let sessionUser: User = userStore.getUserByNumber(requestingNumber).unwrap_or( () => {
-            return new User ("new","user",requestingNumber);
-        });
-        console.log(`Message recieved from ${requestingNumber}, this maps to user: ${sessionUser.fullName}`);
-        
-        sessionUser.setState(new AwaitingConfirmation())
-        let response = sessionUser.processInput(requestingMessage);
+  // User should have a state machine associated with them.
+  let requestingNumber = req.body.From;
+  let requestingMessage = req.body.Body
+  let sessionUser: User = userStore.getUserByNumber(requestingNumber).unwrap_or( () => {
+    return new User ("new","user",requestingNumber);
+  });
+  console.log(`Message recieved from ${requestingNumber}, this maps to user: ${sessionUser.fullName}`);
+    
+  sessionUser.setState(new AwaitingConfirmation())
+  const response: Promise<string> = sessionUser.processInput(requestingMessage);
 
-        const twiml = new MessagingResponse();
-        twiml.message(response);
+  response.then((message: string) => {
+    console.log(`Response: ${message}`);
 
-        res.writeHead(200, {'Content-Type': 'text/xml'});
-        res.end(twiml.toString());
-    }
+    const twiml = new MessagingResponse();
+    twiml.message(message);
+
+    res.writeHead(200, {'Content-Type': 'text/xml'});
+    res.end(twiml.toString());
+  });
+
+  }
 }
