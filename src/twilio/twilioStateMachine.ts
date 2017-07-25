@@ -43,9 +43,6 @@ export abstract class State {
   abstract transitionTo(input: string): Promise<TransitionResult>;
   constructor (readonly user: User){}; 
   // This may also need a reference to the system state, or it may need to be injected
-  
-  // protected static readonly EMPTY_TRANSITON_RESULT: TransitionResult = {responseMessage: "", state: {}};
-
 
   private static COMMAND_ORGANIZE_BOAT: string = "organize boat";
 

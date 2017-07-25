@@ -47,5 +47,17 @@ export class ArrayUtil {
     return retArray;
   }
 
+  /**
+   * If any elements from arr2 are present in arr1, then this is true
+   */
+  public static containsAny<T>(arr1: Array<T>, arr2: Array<T>): boolean {
+    for (let element of arr2) {
+      if (arr1.indexOf(element) >= 0) {
+        return true;
+      }
+    }
+    return false
+  }
+
 
 }
