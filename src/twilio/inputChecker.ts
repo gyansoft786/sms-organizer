@@ -68,4 +68,22 @@ export namespace InputChecker {
     });
   }
 
+  export function checkIfConfirmOrReset(input: string): Promise<boolean> {
+    const normalizedInput: string = normalizeInput(input);
+    return new Promise((resolve, reject) => {
+      switch (normalizedInput) {
+        case "confirm":
+        case "accept": {
+          resolve(true);
+          break;
+        }
+        case "reset": {
+          resolve(false);
+        }
+        default:
+          reject();
+      } 
+    });
+  }
+
 }

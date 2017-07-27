@@ -126,5 +126,37 @@ export class CancelConfirmationState extends State {
        return Promise.resolve(this.indicateInvalidInputAndMaintainState());
     });
   }
+}
 
+export class AwaitingFirstName extends State {
+  public transitionTo(input: string): Promise<TransitionResult> {
+    this.user.setFirstName(input);
+    return Promise.resolve({responseMessage: `Please enter your last name.`, state: new AwaitingLastName(this.user)});
+
+
+  }
+
+
+
+}
+
+export class AwaitingLastName extends State {
+    public transitionTo(input: string): Promise<TransitionResult> {
+      this.user.setLastName(input);
+      return Promise.resolve({responseMessage: `Your full name is ${this.user.fullName}. Text 'Reset' to restart the name input process or 'Confirm' to acknowledge that your name is correct.`, state: new ConfirmOrResetNameState(this.user)});
+  }
+}
+
+export class ConfirmOrResetNameState extends State {
+  public transitionTo(input: string): Promise<TransitionResult> {
+    return InputChecker.checkIfConfirmOrReset(input).then((didConfirm: boolean) => {
+      if (didConfirm){
+        return {responseMessage: `You have confirmed your name as: ${this.user.fullName}. You must wait to be confirmed by an administrator in order to recieve $event notifications.`, state: new StartAndEndState(this.user)};
+      } else {
+        return {responseMessage: `Please enter your first name.`, state: new AwaitingFirstName(this.user)};
+      }
+    }).catch( () => {
+      return Promise.resolve({responseMessage: `Please enter either 'confirm' or 'reset'.`, state: this});
+    })
+  }
 }

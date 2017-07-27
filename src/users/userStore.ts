@@ -9,14 +9,14 @@ export interface UserStore {
   getUserByName(name: string): Optional<User>;
   getUserByNumber(number: string): Optional<User>;
   addUser(user: User): void;
-  getUsersByGroupList(groupList: Array<Group>): Optional<User>;
+  getUsersByGroupList(groupList: Array<Group>): Optional<Array<User>>;
 }
 
 
 @injectable()
 export class MockUserStore implements UserStore {
   
-  private _userArray: Array<User>; // TODO: replace this with some persistent storage.
+  private _userArray: Array<User>; // TODO: replace this with some persistent storage; probably replace a lot of these functions with sql statements.
 
   constructor(){
     this._userArray = [];
@@ -24,6 +24,10 @@ export class MockUserStore implements UserStore {
   
   
   public getAllUsers(): Array<User> {
+    /**
+     * SELECT *
+     * FROM users
+     */
     return this._userArray;
   }
 
@@ -38,6 +42,11 @@ export class MockUserStore implements UserStore {
   }
 
   public getUserByNumber(phoneNumber: string): Optional<User> {
+    /**
+     * SELECT user
+     * FROM users
+     * WHERE phoneNumber=query
+     */
     console.log(`looking for ${phoneNumber}`);
     for (let user of this._userArray) {
       console.log(`searching: ${user.phoneNumber}`);
@@ -50,7 +59,7 @@ export class MockUserStore implements UserStore {
   }
 
   public addUser(user: User): void {
-    console.log(`adding user: ${user}`)
+    console.log(`adding user: ${user}`);
     this._userArray.push(user);
   }
 

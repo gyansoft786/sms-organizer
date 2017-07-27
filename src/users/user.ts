@@ -6,16 +6,17 @@ import { ArrayUtil } from "../util/arrayUtil";
 export class User {
 
   private readonly _phoneNumber: string;
-  private readonly _firstName: string;
-  private readonly _lastName: string;
+  private _firstName: string;
+  private _lastName: string;
   private _groups: Array<Group>;
   private stateMachine: StateMachine;
+  private _provisionalState: string;
 
   constructor( firstName: string, lastName: string, phoneNumber: string ) {
     this._firstName = firstName;
     this._lastName = lastName;
     this._phoneNumber = phoneNumber;
-    this.stateMachine = new StateMachine()
+    this.stateMachine = new StateMachine();
   }
 
 
@@ -25,6 +26,22 @@ export class User {
 
   public processInput(message: string ): Promise<string> {
    return this.stateMachine.processInput(message);
+  }
+
+  public setFirstName(value: string): boolean {
+    if( this._provisionalState) {
+      this._firstName = value;
+      return true;
+    }
+    return false; 
+  
+}
+  public setLastName(value: string): boolean {
+    if( this._provisionalState) {
+      this._lastName = value;
+      return true;
+    }
+    return false; 
   }
 
 
